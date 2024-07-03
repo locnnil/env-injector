@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# { "pokemon": "Bulbasaur", "port": 8080, "server": "10.01.188.23" }
+
+debug() {
+  [ "$DEBUG" != "true" ] || return
+  echo -e "[DEBUG] $1"
+}
+
+json_to_hash_table() {
+  local -n hash_table=$1
+  shift 1
+  local json_input="$@"
+
+  json_input=$(echo "$json_input" | sed 's/[{}]//g' | tr -d '[:space:]')
+
+  IFS=',' read -ra kv_pairs <<<"$json_input"
+
+  for pair in "${kv_pairs[@]}"; do
+    IFS=':' read -r key value <<<"$pair"
+
+    key=$(echo "$key" | sed 's/"//g')
+    value=$(echo "$value" | sed 's/"//g')
+
+    hash_table["$key"]="$value"
+  done
+
+  debug "hash table:\n"
+  for key in "${!hash_table[@]}"; do
+    debug "\n$key : ${hash_table[$key]}\n"
+  done
+
+}
+
+convert_keys() {
+  local fmt=$1
+
+  #!TODO logic to reject numbers in begining
+  fmt=$(echo "$fmt" | sed 's/^[0-9]*//')
+
+  fmt=$(echo "$fmt" | tr '[:lower:]' '[:upper:]')
+  fmt=$(echo "$fmt" | tr '-' '_')
+
+  echo "$fmt"
+}
+
+fmt_table() {
+  local -n old=$1
+  local -n new=$2
+  for k in "${!old[@]}"; do
+    nk=$(convert_keys $k)
+    export ""
+    new["$nk"]=${old[$k]}
+  done
+}
+
+export_vars() {
+  declare -n table=$1
+  for key in "${!table[@]}"; do
+    nk=$(convert_keys $k)
+    export "$nk=${table[$key]}"
+  done
+}
+
+main() {
+  echo "get debug value"
+  debug=$(snapctl get env-injector.debug)
+  [ -n debug ] || export DEBUG="true"
+
+  echo "[DEBUG] debug : $debug"
+  echo "[DEBUG] EXTENSION_DEBUG : $DEBUG"
+  echo $1
+
+  app=$(basename $1) || exit 0
+
+  echo "[DEBUG] app: $app"
+
+  json_str=$(snapctl get apps.$app.env)
+
+  echo "[DEBUG] json $json_str"
+
+  declare -A vars_table
+  json_to_hash_table vars_table $json_str
+
+  export_vars vars_table
+
+  printc "GREEN" "[DEBUG] App being called $app"
+}
+
+main $1
+
+exec "$@"

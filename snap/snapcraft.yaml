@@ -1,0 +1,51 @@
+name: envtester
+base: core24
+version: 'demo'
+summary: Demonstration of env-exporter program
+description: |
+  envtester is a demo snap to show the env-exporter program usecases
+
+platforms:
+  amd64:
+    build-on:  [amd64]
+    build-for: [amd64]
+  arm64:
+    build-on:  [arm64]
+    build-for: [arm64]
+  riscv64:
+    build-on:  [riscv64]
+    build-for: [riscv64]
+  arm64-cross:
+    build-on:  [amd64]
+    build-for: [arm64]
+  riscv64-cross:
+    build-on:  [amd64]
+    build-for: [riscv64]
+
+grade: stable
+confinement: strict
+
+apps:
+  envtester:
+    command-chain: [ bin/env-exporter ]
+    command: envtester
+
+parts:
+  env-exporter:
+    source: snap/local
+    plugin: dump
+
+  envtester:
+    source: .
+    plugin: nil
+    build-snaps: [ go/latest/stable ]
+    override-build: |
+      GOOS=linux
+      [ "$CRAFT_ARCH_BUILD_FOR" == "arm64" ] && GOARCH=arm64 go build
+      [ "$CRAFT_ARCH_BUILD_FOR" == "amd64" ] && GOARCH=amd64 go build
+      [ "$CRAFT_ARCH_BUILD_FOR" == "riscv64" ] && GOARCH=riscv64 go build
+
+      cp envtester $CRAFT_STAGE
+    prime:
+      - envtester
+
