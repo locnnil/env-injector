@@ -1,15 +1,22 @@
 #!/bin/bash
 
-# { "pokemon": "Bulbasaur", "port": 8080, "server": "10.01.188.23" }
-
 debug() {
-  [ "$DEBUG" != "true" ] || return
+  [ "$DEBUG" != "true" ] && return
   echo -e "[DEBUG] $1"
+}
+
+debug_hash_table() {
+  [ "$DEBUG" != "true" ] && return
+  local -n table="$1"
+  debug "Hash table:\n"
+  for key in "${!table[@]}"; do
+    debug "$key : ${table[$key]}\n"
+  done
 }
 
 json_to_hash_table() {
   local -n hash_table=$1
-  shift 1
+  shift
   local json_input="$@"
 
   json_input=$(echo "$json_input" | sed 's/[{}]//g' | tr -d '[:space:]')
@@ -24,67 +31,97 @@ json_to_hash_table() {
 
     hash_table["$key"]="$value"
   done
+}
 
-  debug "hash table:\n"
-  for key in "${!hash_table[@]}"; do
-    debug "\n$key : ${hash_table[$key]}\n"
-  done
-
+check_num_at_start() {
+  if [[ "$1" =~ ^[0-9]+ ]]; then
+    debug "ERROR: Environment variable shouldn't begin with a number\n"
+    return 1
+  fi
+  return 0
 }
 
 convert_keys() {
   local fmt=$1
+  local -n new=$2
 
-  #!TODO logic to reject numbers in begining
-  fmt=$(echo "$fmt" | sed 's/^[0-9]*//')
+  check_num_at_start $fmt
+  [ $? -ne 0 ] && return 1
 
   fmt=$(echo "$fmt" | tr '[:lower:]' '[:upper:]')
-  fmt=$(echo "$fmt" | tr '-' '_')
-
-  echo "$fmt"
-}
-
-fmt_table() {
-  local -n old=$1
-  local -n new=$2
-  for k in "${!old[@]}"; do
-    nk=$(convert_keys $k)
-    export ""
-    new["$nk"]=${old[$k]}
-  done
+  new=$(echo "$fmt" | tr '-' '_')
 }
 
 export_vars() {
   declare -n table=$1
+  local nk
   for key in "${!table[@]}"; do
-    nk=$(convert_keys $k)
+
+    convert_keys $key nk
+    [ $? -ne 0 ] && continue
+    debug "old: $key -> new: $nk"
+
     export "$nk=${table[$key]}"
   done
 }
 
-main() {
-  echo "get debug value"
-  debug=$(snapctl get env-injector.debug)
-  [ -n debug ] || export DEBUG="true"
+handle_envs() {
+  json_str="$@"
+  [ -z "$json_str" ] && return
 
-  echo "[DEBUG] debug : $debug"
-  echo "[DEBUG] EXTENSION_DEBUG : $DEBUG"
-  echo $1
-
-  app=$(basename $1) || exit 0
-
-  echo "[DEBUG] app: $app"
-
-  json_str=$(snapctl get apps.$app.env)
-
-  echo "[DEBUG] json $json_str"
+  debug "[DEBUG] snapctl json:\n$json_str"
 
   declare -A vars_table
   json_to_hash_table vars_table $json_str
+  debug_hash_table vars_table
 
   export_vars vars_table
+}
 
-  printc "GREEN" "[DEBUG] App being called $app"
+handle_envfile() {
+  local envfile=$1
+  [ -z "$envfile" ] && return
+
+  debug "Environment file path: $envfile"
+
+  if [ ! -f "$envfile" ]; then
+    debug "\nERROR: File not found: $envfile\n"
+    return 1
+  fi
+
+  if [ ! -r "$envfile" ]; then
+    debug "\nERROR: File not readable: $envfile\n"
+    return 1
+  fi
+
+  set -a
+  source "$envfile"
+  set +a
+}
+
+main() {
+  DEBUG=$(snapctl get env-injector.debug)
+  debug "debug : $debug"
+
+  app=$(basename $1) || exit 0
+  debug "App: $app"
+
+  debug "Checking for GLOBAL envfile..."
+  envfile=$(snapctl get envfile)
+  handle_envfile $envfile
+
+  debug "Checking for GLOBAL env variables..."
+  json_str=$(snapctl get env)
+  handle_envs $json_str
+
+  debug "Checking for LOCAL envfile..."
+  envfile=$(snapctl get apps.$app.envfile)
+  handle_envfile $envfile
+
+  debug "Checking for LOCAL env variables..."
+  json_str=$(snapctl get apps.$app.env)
+  handle_envs $json_str
+
 }
 
 main $1
