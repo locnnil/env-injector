@@ -1,5 +1,5 @@
-
-ORACULAR=Oriole
+# Ubuntu releases
+ORACULAR=Oriole # latest and greatest!
 NOBLE=Numbat
 MANTIC=Minotaur
 LUNAR=Lobster
