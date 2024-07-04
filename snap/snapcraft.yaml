@@ -27,6 +27,7 @@ confinement: strict
 
 apps:
   envtester:
+    plugs: [ home ]
     command-chain: [ bin/env-exporter ]
     command: envtester
 
