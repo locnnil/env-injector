@@ -2,7 +2,7 @@
 
 This snap is a PoC for the `env-exporter` program.
 
-`env-exporter` is a program that can dinamically load snap options into environment variables
+`env-exporter` is a program that can dynamically load snap options into environment variables
 
 To build it:
 
