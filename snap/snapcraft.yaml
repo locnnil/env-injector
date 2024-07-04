@@ -43,7 +43,5 @@ parts:
     override-build: |
       GOARCH=$CRAFT_ARCH_BUILD_FOR CGO_ENABLED=0 go build
 
-      cp envtester $CRAFT_STAGE
-    prime:
-      - envtester
+      cp envtester $CRAFT_PART_INSTALL
 
