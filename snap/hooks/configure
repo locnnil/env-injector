@@ -1,3 +1,1 @@
 #!/bin/bash
-
-$SNAP/bin/env-exporter.sh "$@"
