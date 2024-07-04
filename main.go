@@ -22,7 +22,21 @@ func main() {
     "COFFE",
     "CHECK",
   }
+
+  var envfile = []string{
+    "ORACULAR",
+    "NOBLE",
+    "MANTIC",
+    "LUNAR",
+    "KINETIC",
+    "JAMMY",
+  }
+
+  fmt.Printf("\nChecking for env variables:\n")
   check_env_vars(tests)
+
+  fmt.Printf("\nChecking for ENVFILE variables:\n")
+  check_env_vars(envfile)
   os.Exit(0)
 }
 
