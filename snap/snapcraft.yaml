@@ -5,31 +5,23 @@ summary: Demonstration of env-exporter program
 description: |
   envtester is a demo snap to show the env-exporter program usecases
 
-platforms:
-  amd64:
-    build-on:  [amd64]
-    build-for: [amd64]
-  arm64:
-    build-on:  [arm64]
-    build-for: [arm64]
-  riscv64:
-    build-on:  [riscv64]
-    build-for: [riscv64]
-  arm64-cross:
-    build-on:  [amd64]
-    build-for: [arm64]
-  riscv64-cross:
-    build-on:  [amd64]
-    build-for: [riscv64]
-
 grade: stable
 confinement: strict
 
 apps:
-  envtester:
+  myapp1:
     plugs: [ home ]
+    environment:
+     app_alias: app1
     command-chain: [ bin/env-exporter ]
-    command: envtester
+    command: bin/envtester
+
+  myapp2:
+    plugs: [ home ]
+    environment:
+     app_alias: app2
+    command-chain: [ bin/env-exporter ]
+    command: bin/envtester
 
 parts:
   env-exporter:
@@ -38,10 +30,6 @@ parts:
 
   envtester:
     source: .
-    plugin: nil
+    plugin: go
     build-snaps: [ go/latest/stable ]
-    override-build: |
-      GOARCH=$CRAFT_ARCH_BUILD_FOR CGO_ENABLED=0 go build
-
-      cp envtester $CRAFT_PART_INSTALL
 

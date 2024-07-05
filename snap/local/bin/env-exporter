@@ -6,7 +6,7 @@ debug() {
 }
 
 err() {
-  echo -e "\n\t[ERROR] $1\n"
+  echo -e "\n[ERROR] $1\n"
 }
 
 debug_hash_table() {
@@ -39,7 +39,7 @@ json_to_hash_table() {
 
 check_num_at_start() {
   if [[ "$1" =~ ^[0-9]+ ]]; then
-    "ERROR: Environment variable name shouldn't begin with a number: $1\n"
+    err "Environment variable name shouldn't begin with a number: $1"
     return 1
   fi
   return 0
@@ -53,7 +53,7 @@ convert_keys() {
   [ $? -ne 0 ] && return 1
 
   new=$(echo "$old" | tr '[:lower:]' '[:upper:]')
-  new=$(echo "$old" | tr '-' '_')
+  new=$(echo "$new" | tr '-' '_')
 
   debug "old: $old -> new: $new"
 }
@@ -90,12 +90,12 @@ handle_envfile() {
   debug "Environment file path: $envfile"
 
   if [ ! -f "$envfile" ]; then
-    err "ERROR: File not found: $envfile"
+    err "Environment file not found: $envfile"
     return 1
   fi
 
   if [ ! -r "$envfile" ]; then
-    err "ERROR: File not readable: $envfile"
+    err "Environment file not readable: $envfile"
     return 1
   fi
 
@@ -108,8 +108,13 @@ main() {
   DEBUG=$(snapctl get env-injector.debug)
   debug "debug : $debug"
 
-  app=$(basename $1) || exit 0
-  debug "App: $app"
+  local app
+  if [ -n $app_alias ]; then
+    app=$app_alias
+  else
+    app=$(basename $1) || exit 0
+  fi
+  debug "App alias: $app"
 
   debug "Checking for GLOBAL envfile..."
   envfile=$(snapctl get envfile)
