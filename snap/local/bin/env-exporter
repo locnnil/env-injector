@@ -6,7 +6,7 @@ debug() {
 }
 
 err() {
-  echo -e "\n\t[ERROR] $1\n"
+  echo -e "\n[ERROR] $1\n"
 }
 
 debug_hash_table() {
@@ -39,7 +39,7 @@ json_to_hash_table() {
 
 check_num_at_start() {
   if [[ "$1" =~ ^[0-9]+ ]]; then
-    "ERROR: Environment variable name shouldn't begin with a number: $1\n"
+    err "Environment variable name shouldn't begin with a number: $1"
     return 1
   fi
   return 0
@@ -90,12 +90,12 @@ handle_envfile() {
   debug "Environment file path: $envfile"
 
   if [ ! -f "$envfile" ]; then
-    err "ERROR: File not found: $envfile"
+    err "Environment file not found: $envfile"
     return 1
   fi
 
   if [ ! -r "$envfile" ]; then
-    err "ERROR: File not readable: $envfile"
+    err "Environment file not readable: $envfile"
     return 1
   fi
 
