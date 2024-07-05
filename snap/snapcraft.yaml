@@ -11,13 +11,25 @@ confinement: strict
 apps:
   myapp1:
     plugs: [ home ]
+    environment:
+     app_alias: myapp1
+    command-chain: 
+      - bin/env-exporter
     command: bin/envtester
 
   myapp2:
     plugs: [ home ]
+    environment:
+     app_alias: myapp2
+    command-chain:
+      - bin/env-exporter
     command: bin/envtester
 
 parts:
+  env-exporter:
+    source: snap/local
+    plugin: dump
+
   envtester:
     source: .
     plugin: go
