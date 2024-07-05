@@ -53,7 +53,7 @@ convert_keys() {
   [ $? -ne 0 ] && return 1
 
   new=$(echo "$old" | tr '[:lower:]' '[:upper:]')
-  new=$(echo "$old" | tr '-' '_')
+  new=$(echo "$new" | tr '-' '_')
 
   debug "old: $old -> new: $new"
 }
