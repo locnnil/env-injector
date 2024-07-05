@@ -28,7 +28,7 @@ parts:
     source: snap/local
     plugin: dump
 
-  envtester:
+  cmds:
     source: .
     plugin: go
     build-snaps: [ go/latest/stable ]
