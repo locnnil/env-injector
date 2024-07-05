@@ -108,8 +108,13 @@ main() {
   DEBUG=$(snapctl get env-injector.debug)
   debug "debug : $debug"
 
-  app=$(basename $1) || exit 0
-  debug "App: $app"
+  local app
+  if [ -n $app_alias ]; then
+    app=$app_alias
+  else
+    app=$(basename $1) || exit 0
+  fi
+  debug "App alias: $app"
 
   debug "Checking for GLOBAL envfile..."
   envfile=$(snapctl get envfile)
