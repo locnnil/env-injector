@@ -158,8 +158,7 @@ convert_keys() {
   check_num_at_start $old
   [ $? -ne 0 ] && return 1
 
-  new=$(echo "$old" | tr '[:lower:]' '[:upper:]')
-  new=$(echo "$new" | tr '-' '_')
+  new=$(echo "$old" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
 
   debug "old: $old -> new: $new"
 }
@@ -211,8 +210,8 @@ handle_envfile() {
 }
 
 main() {
-  DEBUG=$(snapctl get env-injector.debug)
-  debug "debug : $debug"
+  DEBUG=$env_debug
+  debug "debug : $DEBUG"
 
   local app
   if [ -n $env_alias ]; then

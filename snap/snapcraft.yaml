@@ -8,6 +8,11 @@ description: |
 grade: stable
 confinement: strict
 
+hooks:
+  configure:
+    environment:
+      env_apps: "myapp1,myapp2"
+
 apps:
   default-app:
     plugs: [ home ]
@@ -21,6 +26,20 @@ apps:
      app_alias: app1
     command-chain: [ bin/env-exporter ]
     command: bin/envtester
+
+  # an app that doesn't use the exporter
+  myapp-no-env:
+    command: bin/envtester
+
+  # an app to print all the envs for myapp1
+  myapp1-env:
+    plugs: [ home ]
+    environment:
+     env_alias: myapp1
+     env_debug: "true"
+    command-chain: 
+      - bin/env-exporter
+    command: bin/env.sh
 
 parts:
   env-exporter:
