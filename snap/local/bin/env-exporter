@@ -242,4 +242,3 @@ main() {
 main $1
 
 exec "$@"
-
