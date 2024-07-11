@@ -19,7 +19,9 @@ apps:
     environment:
      env_alias: myapp1
      env_debug: "true"
-    command-chain: 
+    stage-packages:
+      - curl
+    command-chain:
       - bin/env-exporter
     command: bin/envtester
 

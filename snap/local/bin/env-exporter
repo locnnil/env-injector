@@ -103,6 +103,18 @@ handle_envfile() {
   set +a
 }
 
+extract_json_part() {
+  local json="$1"
+  local key="$2"
+  echo "$json" | grep -oP '(?<="'$key'":{).*?(?=\}(\s|,))' | sed "s/\"$key\"://"
+}
+
+extract_value() {
+  local json="$1"
+  local key="$2"
+  echo "$json" | grep -oP '(?<="'$key'":").+?(?=")' | sed "s/\"$key\"://"
+}
+
 main() {
   DEBUG=$env_debug
   debug "debug : $DEBUG"
@@ -115,22 +127,38 @@ main() {
   fi
   debug "App alias: $app"
 
+  debug "Getting all snapctl configurations..."
+  snapctl_output=$(snapctl get env envfile apps)
+  debug "snapctl output:\n$snapctl_output"
+
+  global_envfile=$(echo "$snapctl_output" | grep -oP '"envfile":\s*"\K[^"]+')
+
+  # global_envfile=$(extract_value "$snapctl_output" "envfile")
+  global_env=$(extract_json_part "$snapctl_output" "env")
+  app_envfile=$(extract_value "$(echo "$snapctl_output" | grep -oP '(?<="apps":{).*(?=\})')" "$app" | grep -oP '(?<="envfile":").+?(?=")')
+  app_env=$(extract_json_part "$(echo "$snapctl_output" | grep -oP '(?<="apps":{).*(?=\})')" "$app" | grep -oP '(?<="env":{).*(?=\})')
+
+  echo "$global_env"
+  echo "$global_envfile"
+  echo "$app_env"
+  echo "$app_envfile"
+
+  debug "global envfile:\n$global_envfile"
+  debug "global env vars:\n$global_env"
+  debug "app envfile:\n$app_envfile"
+  debug "app env vars:\n$app_env"
+
   debug "Checking for GLOBAL envfile..."
-  envfile=$(snapctl get envfile)
-  handle_envfile $envfile
+  handle_envfile "$global_envfile"
 
   debug "Checking for GLOBAL env variables..."
-  json_str=$(snapctl get env)
-  handle_envs $json_str
+  handle_envs "$global_env"
 
   debug "Checking for LOCAL envfile..."
-  envfile=$(snapctl get apps.$app.envfile)
-  handle_envfile $envfile
+  handle_envfile "$app_envfile"
 
   debug "Checking for LOCAL env variables..."
-  json_str=$(snapctl get apps.$app.env)
-  handle_envs $json_str
-
+  handle_envs "$app_env"
 }
 
 main $1
