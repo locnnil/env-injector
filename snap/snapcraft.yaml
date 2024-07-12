@@ -55,6 +55,7 @@ parts:
       - rustup
     build-packages:
       - musl-tools
+      - upx-ucl
     override-build: |
 
       rustup default stable
@@ -63,7 +64,10 @@ parts:
       cargo build --target x86_64-unknown-linux-musl --release
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin/
       cp target/x86_64-unknown-linux-musl/release/env-exporter $SNAPCRAFT_PART_INSTALL/bin/
-      
+
+      # shrink the binary
+      upx --best --lzma target/x86_64-unknown-linux-musl/release/env-exporter
+      cp target/x86_64-unknown-linux-musl/release/env-exporter $SNAPCRAFT_PART_INSTALL/bin/env-exporter-upx
 
 
   curl-client:
