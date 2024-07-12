@@ -23,12 +23,13 @@ apps:
       - bin/env-exporter
     command: bin/envtester
 
+  # An app to test the efects of upx compression
   myapp2:
     plugs: [ home ]
     environment:
-     env_alias: myapp2
+     env_alias: myapp1
     command-chain:
-      - bin/env-exporter
+      - bin/env-exporter-upx
     command: bin/envtester
 
   # an app that doesn't use the exporter
@@ -59,6 +60,7 @@ parts:
       - rustup
     build-packages:
       - musl-tools
+      - upx-ucl
     override-build: |
 
       rustup default stable
@@ -67,7 +69,10 @@ parts:
       cargo build --target x86_64-unknown-linux-musl --release
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin/
       cp target/x86_64-unknown-linux-musl/release/env-exporter $SNAPCRAFT_PART_INSTALL/bin/
-      
+
+      # shrink the binary
+      upx --best --lzma target/x86_64-unknown-linux-musl/release/env-exporter
+      cp target/x86_64-unknown-linux-musl/release/env-exporter $SNAPCRAFT_PART_INSTALL/bin/env-exporter-upx
 
 
   curl-client:

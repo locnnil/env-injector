@@ -152,10 +152,11 @@ fn main()-> Result<(), Box<dyn Error + Send + Sync>> {
     }
 
     let command = args[1].clone();
+    let args = args[2..].to_vec();
 
     run()?;
 
-    Command::new(command).status()?;
+    Command::new(command).args(args).status()?;
 
     Ok(())
 }
