@@ -19,8 +19,6 @@ apps:
     environment:
      env_alias: myapp1
      env_debug: "true"
-    stage-packages:
-      - curl
     command-chain:
       - bin/env-exporter
     command: bin/envtester
@@ -51,6 +49,31 @@ parts:
   env-exporter:
     source: snap/local
     plugin: dump
+  
+  binary-env-exporter:
+    after:
+      - env-exporter
+    source: exporter
+    plugin: nil
+    build-snaps:
+      - rustup
+    build-packages:
+      - musl-tools
+    override-build: |
+
+      rustup default stable
+      rustup target add x86_64-unknown-linux-musl
+
+      cargo build --target x86_64-unknown-linux-musl --release
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin/
+      cp target/x86_64-unknown-linux-musl/release/env-exporter $SNAPCRAFT_PART_INSTALL/bin/
+      
+
+
+  curl-client:
+    plugin: nil
+    stage-packages:
+      - curl
 
   envtester:
     source: .

@@ -1,3 +1,8 @@
 squashfs-root/*
 
 *.snap
+
+# Rust
+exporter/target/
+exporter/debug/
+**/*.rs.bk
