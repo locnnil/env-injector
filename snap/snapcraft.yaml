@@ -18,20 +18,16 @@ apps:
     plugs: [ home ]
     environment:
      env_alias: myapp1
-     env_debug: "true"
-    stage-packages:
-      - curl
-    command-chain:
-      - bin/env-exporter
     command: bin/envtester
+    extensions: [ env-injector ]
 
+  # An app to test the efects of upx compression
   myapp2:
     plugs: [ home ]
     environment:
      env_alias: myapp2
-    command-chain:
-      - bin/env-exporter
     command: bin/envtester
+    extensions: [ env-injector ]
 
   # an app that doesn't use the exporter
   myapp-no-env:
@@ -43,8 +39,6 @@ apps:
     environment:
      env_alias: myapp1
      env_debug: "true"
-    command-chain: 
-      - bin/env-exporter
     command: bin/env.sh
 
 parts:
