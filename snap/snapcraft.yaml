@@ -22,7 +22,7 @@ apps:
     command: bin/myapp2
 
 parts:
-  envtester:
+  myapp1:
     source: .
     plugin: go
     build-snaps:
