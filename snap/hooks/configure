@@ -1,5 +1,2 @@
 #!/bin/bash
 
-TAG="$SNAP_INSTANCE_NAME.hook.configure"
-
-logger --tag=$TAG "env_apps: $env_apps"
