@@ -3,46 +3,34 @@ base: core24
 version: 'demo'
 summary: Demonstration of env-exporter program
 description: |
-  envtester is a demo snap to show the env-exporter program usecases
+  envtester is a demo snap to show the env-exporter program use cases
 
 grade: stable
 confinement: strict
 
-hooks:
-  configure:
-    environment:
-      env_apps: "myapp1,myapp2"
-
 apps:
   myapp1:
-    plugs: [ home ]
+    daemon: simple
     environment:
      env_alias: myapp1
-     env_debug: "true"
-    command-chain: 
-      - bin/env-exporter
+    extensions:
+      - env-injector
     command: bin/envtester
 
   myapp2:
-    plugs: [ home ]
+    daemon: simple
     environment:
      env_alias: myapp2
-    command-chain:
-      - bin/env-exporter
-    command: bin/envtester
-
-  # an app that doesn't use the exporter
-  myapp-no-env:
+    extensions:
+      - env-injector
     command: bin/envtester
 
   # an app to print all the envs for myapp1
   myapp1-env:
-    plugs: [ home ]
     environment:
      env_alias: myapp1
-     env_debug: "true"
-    command-chain: 
-      - bin/env-exporter
+    extensions:
+      - env-injector
     command: bin/env.sh
 
 parts:

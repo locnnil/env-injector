@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func check_env_vars(tests []string) {
@@ -37,5 +39,8 @@ func main() {
 
 	fmt.Printf("\nChecking for ENVFILE variables:\n")
 	check_env_vars(envfile)
-	os.Exit(0)
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	<-sigs
 }
