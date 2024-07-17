@@ -11,21 +11,17 @@ confinement: strict
 apps:
   myapp1:
     daemon: simple
-    command-chain:
-      - bin/load-myapp1-options.sh
+    extensions:
+      - env-injector
     command: bin/myapp1
 
   myapp2:
     daemon: simple
-    command-chain:
-      - bin/load-myapp2-options.sh
+    extensions:
+      - env-injector
     command: bin/myapp2
 
 parts:
-  local:
-    source: snap/local
-    plugin: dump
-
   envtester:
     source: .
     plugin: go
