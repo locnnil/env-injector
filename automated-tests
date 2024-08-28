@@ -35,7 +35,7 @@ main() {
     snapcraft
   fi
 
-  echo -e "${COLOR['WHITE']}\nInstalling snap with two apps, one with and other without the expoerter${COLOR['END']}"
+  echo -e "${COLOR['WHITE']}\nInstalling snap with two apps, one with and other without the exporter${COLOR['END']}"
   sudo snap install ./envtester_demo_amd64.snap --dangerous
 
   echo -e "${COLOR['WHITE']}\nWithout the exporter program ${COLOR['END']}"
