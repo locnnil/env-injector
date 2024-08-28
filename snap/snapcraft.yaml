@@ -20,7 +20,6 @@ apps:
     plugs: [ home ]
     environment:
      app_alias: app2
-    command-chain: [ bin/env-exporter ]
     command: bin/envtester
 
 parts:
@@ -29,7 +28,7 @@ parts:
     plugin: dump
 
   cmds:
-    source: .
     plugin: go
+    source: .
     build-snaps: [ go/latest/stable ]
 

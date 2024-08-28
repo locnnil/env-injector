@@ -1,0 +1,56 @@
+#!/usr/bin/bash
+
+iterations=${1:-10}
+
+declare -A COLOR
+COLOR['END']='\033[0m'
+COLOR['RED']='\033[0;91m'
+COLOR['GREEN']='\033[0;92m'
+COLOR['YELLOW']='\033[0;93m'
+COLOR['BLUE']='\033[0;94m'
+COLOR['WHITE']='\033[0;37m'
+COLOR['NC']='\033[0m'
+COLOR['CYAN']='\033[0;96m'
+
+printc() {
+  local color="$1"
+  shift
+  echo -e "${COLOR[$color]}$@${COLOR['END']}"
+}
+
+cleanup() {
+  echo -e "${COLOR['WHITE']}\nCleanup ${COLOR['END']}"
+  sudo snap remove --purge envtester
+}
+
+get_word() {
+  local w
+  w=$(curl -s https://random-word-api.herokuapp.com/word | jq -r '.[0]')
+  echo "$w"
+}
+
+main() {
+  cleanup
+
+  echo -e "${COLOR['WHITE']}\nInstalling snap with two apps, one with and other without the expoerter${COLOR['END']}"
+  sudo snap install ./envtester_demo_amd64.snap --dangerous
+
+  echo -e "${COLOR['WHITE']}\nWithout the exporter program ${COLOR['END']}"
+  sudo perf stat -r1000 envtester.myapp2
+
+  for index in $(seq 0 "$iterations"); do
+    echo "With $index environment variables"
+
+    echo -e "${COLOR['BLUE']}\nWith ${COLOR['RED']}$index${COLOR['BLUE']} environment variables ${COLOR['END']}"
+    sudo perf stat -r1000 envtester.myapp1
+
+    name=$(get_word)
+    value=$(get_word)
+    sudo snap set envtester "env.$name"="$value"
+  done
+
+  cleanup
+}
+
+set -x
+main
