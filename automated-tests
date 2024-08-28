@@ -31,6 +31,7 @@ get_word() {
 
 main() {
   cleanup
+  snapcraft
 
   echo -e "${COLOR['WHITE']}\nInstalling snap with two apps, one with and other without the expoerter${COLOR['END']}"
   sudo snap install ./envtester_demo_amd64.snap --dangerous
