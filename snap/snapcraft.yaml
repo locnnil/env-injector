@@ -10,36 +10,23 @@ confinement: strict
 
 apps:
   myapp1:
-    daemon: simple
     environment:
-     env_alias: myapp1
+      env_alias: app1
     extensions:
       - env-injector
-    command: bin/envtester
+    command: env.sh
 
   myapp2:
-    daemon: simple
     environment:
-     env_alias: myapp2
+      env_alias: app2
     extensions:
       - env-injector
-    command: bin/envtester
-
-  # an app to print all the envs for myapp1
-  myapp1-env:
-    environment:
-     env_alias: myapp1
-    extensions:
-      - env-injector
-    command: bin/env.sh
+    command: env.sh
 
 parts:
   env-exporter:
-    source: snap/local
+    source: env.sh
+    source-type: file
     plugin: dump
 
-  envtester:
-    source: .
-    plugin: go
-    build-snaps: [ go/latest/stable ]
 
