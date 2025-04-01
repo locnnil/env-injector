@@ -1,6 +1,4 @@
-#!/usr/bin/bash
-
-iterations=${1:-10}
+#!/usr/bin/env bash
 
 declare -A COLOR
 COLOR['END']='\033[0m'
