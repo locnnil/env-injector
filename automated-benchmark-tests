@@ -33,7 +33,7 @@ get_word() {
 main() {
   cleanup
   if [ ! -f "./envtester_demo_amd64.snap" ]; then
-    snapcraft
+    SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 snapcraft
   fi
 
   echo -e "${COLOR['WHITE']}\nInstalling snap with two apps, one with and other without the exporter${COLOR['END']}"
