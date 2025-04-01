@@ -45,6 +45,18 @@ help() {
 }
 
 main() {
+  if [ -z "${envs}" ]; then
+    envs=${envsDefault}
+  fi
+  if [ -z "${iter}" ]; then
+    iter=${iterDefault}
+  fi
+
+  envSetups=${1:-"${envs}"}
+
+  echo -e "${COLOR['BLUE']} number of env variables: ${envs} ${COLOR['END']}"
+  echo -e "${COLOR['BLUE']} number of iterations: ${iter} ${COLOR['END']}"
+
   cleanup
   if [ ! -f "./envtester_demo_amd64.snap" ]; then
     SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 snapcraft
@@ -54,21 +66,40 @@ main() {
   sudo snap install ./envtester_demo_amd64.snap --dangerous
 
   echo -e "${COLOR['WHITE']}\nWithout the exporter program ${COLOR['END']}"
-  sudo perf stat -r1000 envtester.myapp2
+  sudo perf stat -r${iter} envtester.default-app
 
-  for index in $(seq 0 "$iterations"); do
+  for index in $(seq 0 "$envSetups"); do
     echo "With $index environment variables"
 
     echo -e "${COLOR['BLUE']}\nWith ${COLOR['RED']}$index${COLOR['BLUE']} environment variables ${COLOR['END']}"
-    sudo perf stat -r1000 envtester.myapp1
+    sudo perf stat -r${iter} envtester.myapp1
 
-    name=$(get_word)
+    key=$(get_word)
     value=$(get_word)
-    sudo snap set envtester "env.$name"="$value"
+
+    echo -e "${COLOR['WHITE']}\nSetting snap option: ${COLOR['BLUE']}$key${COLOR['WHITE']} = ${COLOR['BLUE']}$value${COLOR['END']}"
+    sudo snap set envtester "env.$key"="$value"
   done
 
   cleanup
 }
 
-set -x
+while getopts ":i:n:" o; do
+    case "${o}" in
+        i)
+            is_number ${OPTARG} || help
+            iter=${OPTARG}
+            ;;
+        n)
+            is_number ${OPTARG} || help
+            envs=${OPTARG}
+            ;;
+        *)
+            help
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+set -xe
 main
