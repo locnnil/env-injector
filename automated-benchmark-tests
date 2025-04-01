@@ -75,6 +75,12 @@ main() {
     key=$(get_word)
     value=$(get_word)
 
+    if [[ -z "$key" || -z "$value" ]]; then
+      printc "RED" "Error: 'name' or 'value' is empty!" >&2
+      printc "RED" "API faield to return a word" >&2
+      exit 1
+    fi
+
     echo -e "${COLOR['WHITE']}\nSetting snap option: ${COLOR['BLUE']}$key${COLOR['WHITE']} = ${COLOR['BLUE']}$value${COLOR['END']}"
     sudo snap set envtester "env.$key"="$value"
   done
