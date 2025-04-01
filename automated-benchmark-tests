@@ -12,6 +12,9 @@ COLOR['WHITE']='\033[0;37m'
 COLOR['NC']='\033[0m'
 COLOR['CYAN']='\033[0;96m'
 
+envsDefault=1
+iterDefault=100
+
 printc() {
   local color="$1"
   shift
