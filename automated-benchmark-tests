@@ -27,6 +27,13 @@ get_word() {
   # echo $(curl -s https://random-word-api.herokuapp.com/word | jq -r '.[0]')
   echo $(curl -s https://random-word-api.vercel.app/api?words=1 | jq -r '.[0]')
 }
+help() {
+  echo "Usage: $0 [-n <int>] [-i <int>]" 1>&2;
+  echo -e "  -n\tMax number of environment variables to test with (default: $envsDefault)" 1>&2
+  echo -e "  -i\tNumber of iterations on each config set of envs (default: $iterDefault)" 1>&2
+  exit 1;
+}
+
 }
 
 main() {
