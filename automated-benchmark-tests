@@ -25,7 +25,8 @@ cleanup() {
 
 get_word() {
   local w
-  w=$(curl -s https://random-word-api.herokuapp.com/word | jq -r '.[0]')
+  # w=$(curl -s https://random-word-api.herokuapp.com/word | jq -r '.[0]')
+  w=$(curl -s https://random-word-api.vercel.app/api?words=1 | jq -r '.[0]')
   echo "$w"
 }
 
