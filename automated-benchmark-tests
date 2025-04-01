@@ -21,6 +21,10 @@ printc() {
   echo -e "${COLOR[$color]}$@${COLOR['END']}"
 }
 
+is_number() {
+  [[ "$1" =~ ^[0-9]+$ ]]
+}
+
 cleanup() {
   echo -e "${COLOR['WHITE']}\nCleanup ${COLOR['END']}"
   sudo snap remove --purge envtester
@@ -30,6 +34,7 @@ get_word() {
   # echo $(curl -s https://random-word-api.herokuapp.com/word | jq -r '.[0]')
   echo $(curl -s https://random-word-api.vercel.app/api?words=1 | jq -r '.[0]')
 }
+
 help() {
   echo "Usage: $0 [-n <int>] [-i <int>]" 1>&2;
   echo -e "  -n\tMax number of environment variables to test with (default: $envsDefault)" 1>&2
