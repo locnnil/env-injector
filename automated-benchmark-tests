@@ -12,6 +12,7 @@ COLOR['CYAN']='\033[0;96m'
 
 envsDefault=1
 iterDefault=100
+appsDefault=1
 
 printc() {
   local color="$1"
@@ -37,6 +38,7 @@ help() {
   echo "Usage: $0 [-n <int>] [-i <int>]" 1>&2;
   echo -e "  -n\tMax number of environment variables to test with (default: $envsDefault)" 1>&2
   echo -e "  -i\tNumber of iterations on each config set of envs (default: $iterDefault)" 1>&2
+  echo -a "  -a\tNumber of apps inside the snap to test with (default: $appsDefault + 1 without the extension)" 1>&2
   exit 1;
 }
 
@@ -71,10 +73,15 @@ main() {
     iter=${iterDefault}
   fi
 
+  if [ -z "${apps}" ]; then
+    apps=${appsDefault}
+  fi
+
   envSetups=${1:-"${envs}"}
 
   echo -e "${COLOR['BLUE']} number of env variables: ${envs} ${COLOR['END']}"
   echo -e "${COLOR['BLUE']} number of iterations: ${iter} ${COLOR['END']}"
+  echo -e "${COLOR['BLUE']} number of apps: $((${apps}+1)) ${COLOR['END']}"
 
   cleanup
   if [ ! -f "./envtester_demo_amd64.snap" ]; then
@@ -109,7 +116,7 @@ main() {
   cleanup
 }
 
-while getopts ":i:n:" o; do
+while getopts ":i:n:a:" o; do
     case "${o}" in
         i)
             is_number ${OPTARG} || help
@@ -118,6 +125,10 @@ while getopts ":i:n:" o; do
         n)
             is_number ${OPTARG} || help
             envs=${OPTARG}
+            ;;
+        a)
+            is_number ${OPTARG} || help
+            apps=${OPTARG}
             ;;
         *)
             help
