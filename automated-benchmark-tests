@@ -96,23 +96,37 @@ main() {
   echo -e "${COLOR['WHITE']}\nWithout the exporter program ${COLOR['END']}"
   sudo perf stat -r${iter} envtester.default-app
 
-  for index in $(seq 0 "$envSetups"); do
-    echo "With $index environment variables"
 
-    echo -e "${COLOR['BLUE']}\nWith ${COLOR['RED']}$index${COLOR['BLUE']} environment variables ${COLOR['END']}"
-    sudo perf stat -r${iter} envtester.myapp1
+  # Loop for testing the piped apps
+  for i in $(seq 1 "$apps"); do
+    pipeline=""
+    for ((j=1; j<=i; j++)); do
+      if [ $j -gt 1 ]; then
+        pipeline+=" | "
+      fi
+      pipeline+="envtester.myapp${i}"
+    done
 
-    key=$(get_word)
-    value=$(get_word)
+    # Loop for increasing the number of exported env variables
+    for index in $(seq 0 "$envSetups"); do
 
-    if [[ -z "$key" || -z "$value" ]]; then
-      printc "RED" "Error: 'name' or 'value' is empty!" >&2
-      printc "RED" "API faield to return a word" >&2
-      exit 1
-    fi
+      echo -e "${COLOR['WHITE']}\n\tPiped Apps: ${COLOR['BLUE']}$i${COLOR['WHITE']} apps ${COLOR['END']}"
+      echo -e "${COLOR['BLUE']}\n\tEnv Vars: ${COLOR['RED']}$index${COLOR['END']}"
+      sudo perf stat -r${iter} bash -c "$pipeline"
 
-    echo -e "${COLOR['WHITE']}\nSetting snap option: ${COLOR['BLUE']}$key${COLOR['WHITE']} = ${COLOR['BLUE']}$value${COLOR['END']}"
-    sudo snap set envtester "env.$key"="$value"
+      key=$(get_word)
+      value=$(get_word)
+
+      if [[ -z "$key" || -z "$value" ]]; then
+        printc "RED" "Error: 'name' or 'value' is empty!" >&2
+        printc "RED" "API faield to return a word" >&2
+        exit 1
+      fi
+
+      echo -e "${COLOR['WHITE']}\nSetting snap option: ${COLOR['BLUE']}$key${COLOR['WHITE']} = ${COLOR['BLUE']}$value${COLOR['END']}"
+      sudo snap set envtester "env.$key"="$value"
+    done
+
   done
 
   cleanup
