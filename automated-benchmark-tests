@@ -40,7 +40,28 @@ help() {
   exit 1;
 }
 
+insert_app_into_snap() {
+  local yaml_file="$1"
+  local num="$2"
+
+  yq eval ".apps.myapp${num} = {
+      \"plugs\": [\"home\"],
+      \"environment\": { \"app_alias\": \"app${num}\" },
+      \"command-chain\": [\"bin/env-exporter\"],
+      \"command\": \"bin/envtester\"
+  }" "$yaml_file" > tmp.yaml && mv tmp.yaml "$yaml_file"
 }
+
+patch_snap_yaml(){
+  if [[ ! ${apps} -ge 2 ]]; then
+    echo "No need to patch the snap yaml file"
+    return
+  fi 
+  for i in $(seq 1 "$apps"); do
+    insert_app_into_snap "snap/snapcraft.yaml" "$i"
+  done
+}
+
 
 main() {
   if [ -z "${envs}" ]; then
