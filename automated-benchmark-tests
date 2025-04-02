@@ -85,7 +85,8 @@ main() {
   echo -e "${COLOR['BLUE']} number of apps: $((${apps}+1)) ${COLOR['END']}"
 
   cleanup
-  if [ ! -f "./envtester_demo_amd64.snap" ]; then
+  if [[ ! -f "./envtester_demo_amd64.snap" || $apps -ge 2 ]]; then
+    patch_snap_yaml
     SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 snapcraft
   fi
 
