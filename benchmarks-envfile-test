@@ -1,0 +1,96 @@
+#!/bin/bash
+
+. common
+
+help() {
+  echo "Usage: $0 [-n <int>] [-i <int>]" 1>&2
+  echo -e "  -n\tMax number of environment variables on the envfile to test with (default: $envsDefault)" 1>&2
+  echo -e "  -i\tNumber of iterations on each config set of envs (default: $iterDefault)" 1>&2
+  exit 1
+}
+
+main() {
+  if [ -z "${envs}" ]; then
+    envs=${envsDefault}
+  fi
+  if [ -z "${iter}" ]; then
+    iter=${iterDefault}
+  fi
+
+  envSetups=${1:-"${envs}"}
+
+  echo -e "${COLOR['BLUE']} number of env variables on envfile: ${envs} ${COLOR['END']}"
+  echo -e "${COLOR['BLUE']} number of iterations: ${iter} ${COLOR['END']}"
+
+  cleanup
+  if [[ ! -f "./envtester_demo_amd64.snap" ]]; then
+    SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 snapcraft
+  fi
+
+  echo -e "${COLOR['WHITE']}\nInstalling snap with two apps, one with and other without the exporter${COLOR['END']}"
+  sudo snap install ./envtester_demo_amd64.snap --dangerous
+
+  csvfile="result_envfile_with_${envs}envs.csv"
+  echo -e "${COLOR['WHITE']}\nCreating $csvfile${COLOR['END']}"
+  touch "$csvfile"
+
+  envfile="/var/snap/envtester/common/envs.env"
+  echo -e "${COLOR['WHITE']}\nCreating $envfile${COLOR['END']}"
+  sudo touch "$envfile"
+
+  echo -e "${COLOR['WHITE']}\nSet snap option envfile=$envfile${COLOR['END']}"
+  sudo snap set envtester "envfile"="$envfile"
+
+  echo -e "${COLOR['WHITE']}\nRUN: Without the exporter program ${COLOR['END']}"
+  sudo perf stat -r${iter} envtester.default-app
+
+  # Loop for increasing the number of env variables on the envfile
+  for index in $(seq 0 "$envSetups"); do
+
+    echo -e "${COLOR['BLUE']}\n\tEnv Vars: ${COLOR['RED']}$index${COLOR['END']}"
+
+    ###### The perf stat command ######
+    perfOutput=$(sudo perf stat -r${iter} envtester.myapp1 2>&1 | tee /dev/tty)
+
+    # Extracting latency from the perf output
+    latency=$(echo "$perfOutput" | awk '/task-clock/ {print $1}')
+
+    # Store in the CSV file
+    echo "$index;$latency" >>"$csvfile"
+
+    key=$(get_word)
+    value=$(get_word)
+
+    if [[ -z "$key" || -z "$value" ]]; then
+      printc "RED" "Error: 'name' or 'value' is empty!" >&2
+      printc "RED" "API faield to return a word" >&2
+      exit 1
+    fi
+
+    echo -e "${COLOR['WHITE']}\n Adding to envfile: ${COLOR['BLUE']}$key${COLOR['WHITE']}=${COLOR['BLUE']}$value${COLOR['END']}"
+    echo "$key=$value" | sudo tee -a "$envfile" >/dev/null
+
+  done
+
+  cleanup
+}
+
+while getopts ":i:n:" o; do
+  case "${o}" in
+  i)
+    is_number ${OPTARG} || help
+    iter=${OPTARG}
+    ;;
+  n)
+    is_number ${OPTARG} || help
+    envs=${OPTARG}
+    ;;
+  *)
+    help
+    ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+main
+
