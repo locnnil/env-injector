@@ -2,3 +2,6 @@ squashfs-root/*
 
 *.snap
 env
+
+# output file from tests
+*.csv
