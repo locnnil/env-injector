@@ -96,6 +96,10 @@ main() {
   echo -e "${COLOR['WHITE']}\nWithout the exporter program ${COLOR['END']}"
   sudo perf stat -r${iter} envtester.default-app
 
+  csvfile="result_${apps}apps_${envs}envs.csv"
+  echo -e "${COLOR['WHITE']}\nCreating $csvfile${COLOR['END']}"
+  touch "$csvfile"
+
 
   # Loop for testing the piped apps
   for i in $(seq 1 "$apps"); do
@@ -112,7 +116,15 @@ main() {
 
       echo -e "${COLOR['WHITE']}\n\tPiped Apps: ${COLOR['BLUE']}$i${COLOR['WHITE']} apps ${COLOR['END']}"
       echo -e "${COLOR['BLUE']}\n\tEnv Vars: ${COLOR['RED']}$index${COLOR['END']}"
-      sudo perf stat -r${iter} bash -c "$pipeline"
+
+      ###### The perf stat command ######
+      perfOutput=$(sudo perf stat -r${iter} bash -c "$pipeline" 2>&1 | tee /dev/tty)
+
+      # Extracting latency from the perf output
+      latency=$(echo "$perfOutput" | awk '/task-clock/ {print $1}')
+
+      # Store in the CSV file
+      echo "$i;$index;$latency" >> "$csvfile"
 
       key=$(get_word)
       value=$(get_word)
