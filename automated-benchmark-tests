@@ -1,39 +1,6 @@
 #!/usr/bin/env bash
 
-declare -A COLOR
-COLOR['END']='\033[0m'
-COLOR['RED']='\033[0;91m'
-COLOR['GREEN']='\033[0;92m'
-COLOR['YELLOW']='\033[0;93m'
-COLOR['BLUE']='\033[0;94m'
-COLOR['WHITE']='\033[0;37m'
-COLOR['NC']='\033[0m'
-COLOR['CYAN']='\033[0;96m'
-
-envsDefault=1
-iterDefault=100
-appsDefault=1
-
-printc() {
-  local color="$1"
-  shift
-  echo -e "${COLOR[$color]}$@${COLOR['END']}"
-}
-
-is_number() {
-  [[ "$1" =~ ^[0-9]+$ ]]
-}
-
-cleanup() {
-  echo -e "${COLOR['WHITE']}\nCleanup ${COLOR['END']}"
-  sudo snap remove --purge envtester
-  git restore snap/snapcraft.yaml
-}
-
-get_word() {
-  # echo $(curl -s https://random-word-api.herokuapp.com/word | jq -r '.[0]')
-  echo $(curl -s https://random-word-api.vercel.app/api?words=1 | jq -r '.[0]')
-}
+. common
 
 help() {
   echo "Usage: $0 [-n <int>] [-i <int>]" 1>&2;
