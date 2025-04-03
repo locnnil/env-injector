@@ -1,6 +1,6 @@
 #!/bin/bash
 
-envsDefault=1
+envsDefault=10
 iterDefault=100
 appsDefault=1
 
