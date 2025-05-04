@@ -7,7 +7,7 @@ use std::error::Error;
 use std::process::Command;
 use std::collections::HashMap;
 use std::path::Path;
-use std::io::BufRead;
+use dotenv;
 
 const SNAPD_SOCKET: &str = "/run/snapd-snap.socket";
 
@@ -19,7 +19,7 @@ async fn snapdapi_req() -> Result<serde_json::Value, Box<dyn Error + Send + Sync
     let snap_context = std::env::var("SNAP_CONTEXT")?;
 
     let request_body = format!(
-        r#"{{"context-id":"{}","args":["get","env", "envfile", "apps"]}}"#,
+        r#"{{"context-id":"{}","args":["get", "env", "envfile", "apps"]}}"#,
         snap_context
     );
 
@@ -43,20 +43,31 @@ async fn snapdapi_req() -> Result<serde_json::Value, Box<dyn Error + Send + Sync
     Ok(serde_json::from_slice(&body)?)
 }
 
+fn process_env(env: &serde_json::Value) -> HashMap<String, String> {
+    let obj = env.as_object()
+        .ok_or("Expected an object (JSON input)").unwrap();
+    let mut map = HashMap::new();
+
+    for (k, v) in obj {
+        if v.is_object() || v.is_array() {
+            eprintln!(
+                "Skipped invalid key containing dots: {}",
+                v
+            );
+            continue;
+        }
+
+        let key = k.to_uppercase().replace("-", "_");
+        let value = v.to_string();
+        map.insert(key, value);
+    }
+    map
+}
+
 fn set_env_vars(app: &str, json: &serde_json::Value) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let stdout_str = json["result"]["stdout"].as_str().ok_or("Invalid stdout")?;
     let stdout_json: serde_json::Value = serde_json::from_str(stdout_str)?;
 
-    fn process_env(env: &serde_json::Value) -> HashMap<String, String> {
-        env.as_object()
-            .unwrap()
-            .iter()
-            .map(|(k, v)| {
-                let key = k.to_uppercase().replace("-", "_");
-                (key, v.to_string())
-            })
-            .collect()
-    }
 
     if let Some(global_env) = stdout_json["env"].as_object() {
         for (key, value) in process_env(&serde_json::Value::Object(global_env.clone())) {
@@ -73,7 +84,7 @@ fn set_env_vars(app: &str, json: &serde_json::Value) -> Result<(), Box<dyn std::
     Ok(())
 }
 
-fn source_env_file(file_path: &str) -> std::io::Result<HashMap<String, String>> {
+fn source_env_file(file_path: &str) -> std::io::Result<()> {
     let path = Path::new(file_path);
 
     if !path.exists() {
@@ -86,20 +97,12 @@ fn source_env_file(file_path: &str) -> std::io::Result<HashMap<String, String>> 
         return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "File is not readable"));
     }
 
-    let file = std::fs::File::open(file_path)?;
-    let reader = std::io::BufReader::new(file);
+    dotenv::from_path(path).map_err(|e| {
+        eprintln!("Failed to load environment file: {}", e);
+        std::io::Error::new(std::io::ErrorKind::InvalidData, "Failed to load environment file")
+    })?;
 
-    let mut env_vars = HashMap::new();
-    for line in reader.lines() {
-        let line = line?;
-        if !line.trim().is_empty() && !line.starts_with('#') {
-            if let Some((key, value)) = line.split_once('=') {
-                env_vars.insert(key.to_string(), value.to_string());
-            }
-        }
-    }
-
-    Ok(env_vars)
+    Ok(())
 }
 
 fn set_env_vars_from_file(app: &str, json: &serde_json::Value) ->  Result<(), Box<dyn std::error::Error + Send + Sync>>  {
@@ -109,20 +112,12 @@ fn set_env_vars_from_file(app: &str, json: &serde_json::Value) ->  Result<(), Bo
 
     // Source the global envfile first
     if let Some(global_envfile) = stdout_json["envfile"].as_str() {
-        if let Ok(env_vars) = source_env_file(global_envfile) {
-            for (key, value) in env_vars {
-                std::env::set_var(key, value);
-            }
-        }
+        source_env_file(global_envfile)?;
     }
 
     // Source the app-specific envfile
     if let Some(app_envfile) = stdout_json["apps"][app]["envfile"].as_str() {
-        if let Ok(env_vars) = source_env_file(app_envfile) {
-            for (key, value) in env_vars {
-                std::env::set_var(key, value);
-            }
-        }
+        source_env_file(app_envfile)?;
     }
 
     Ok(())
@@ -135,14 +130,13 @@ async fn run() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let app = std::env::var("env_alias")?;
 
-    set_env_vars(&app, &json)?;
-
     set_env_vars_from_file(&app, &json)?;
+    set_env_vars(&app, &json)?;
 
     Ok(())
 }
 
-fn main()-> Result<(), Box<dyn Error + Send + Sync>> {
+fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let args: Vec<String> = std::env::args().collect();
 
@@ -156,7 +150,7 @@ fn main()-> Result<(), Box<dyn Error + Send + Sync>> {
 
     run()?;
 
-    Command::new(command).args(args).status()?;
+    let status = Command::new(command).args(args).status()?;
 
-    Ok(())
+    std::process::exit(status.code().unwrap_or(1));
 }
