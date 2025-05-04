@@ -5,3 +5,8 @@ env
 
 # output file from tests
 *.csv
+
+# Rust
+exporter/target/
+exporter/debug/
+**/*.rs.bk
