@@ -7,6 +7,6 @@ env
 *.csv
 
 # Rust
-exporter/target/
-exporter/debug/
+*/target/
+*/debug/
 **/*.rs.bk
